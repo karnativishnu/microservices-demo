@@ -16,9 +16,8 @@ pipeline {
     }
 
     environment {
-        // Nexus Docker hosted repo (JFrog Artifactory works the same way, only the host differs).
-        REGISTRY          = 'nexus.example.com:8082'
-        REGISTRY_CREDS    = 'nexus-docker-credentials'
+        DOCKERHUB_NAMESPACE = 'karnativ'
+        DOCKERHUB_CREDS     = 'dockerhub-credentials'
         IMAGE_TAG         = "1.0.${BUILD_NUMBER}"
         SONARQUBE_ENV     = 'sonarqube'
         SONAR_ORGANIZATION = 'karnativishnu'
@@ -180,8 +179,8 @@ pipeline {
                         ["${svc}": {
                             sh """
                                 docker build \
-                                  -t ${REGISTRY}/${svc}:${IMAGE_TAG} \
-                                  -t ${REGISTRY}/${svc}:latest \
+                                  -t ${DOCKERHUB_NAMESPACE}/${svc}:${IMAGE_TAG} \
+                                  -t ${DOCKERHUB_NAMESPACE}/${svc}:latest \
                                   ./${svc}
                             """
                         }]
@@ -201,7 +200,7 @@ pipeline {
                               --ignore-unfixed \
                               --format table \
                               --output trivy-image-${svc}.txt \
-                              ${REGISTRY}/${svc}:${IMAGE_TAG}
+                              ${DOCKERHUB_NAMESPACE}/${svc}:${IMAGE_TAG}
                         """
                     }
                 }
@@ -213,27 +212,27 @@ pipeline {
             }
         }
 
-        stage('Push to Nexus') {
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: "${REGISTRY_CREDS}",
-                    usernameVariable: 'REGISTRY_USER',
-                    passwordVariable: 'REGISTRY_PASS'
+                    credentialsId: "${DOCKERHUB_CREDS}",
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
                 )]) {
-                    sh 'echo "$REGISTRY_PASS" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin'
+                    sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin'
                 }
                 script {
                     SERVICES.each { svc ->
                         sh """
-                            docker push ${REGISTRY}/${svc}:${IMAGE_TAG}
-                            docker push ${REGISTRY}/${svc}:latest
+                            docker push ${DOCKERHUB_NAMESPACE}/${svc}:${IMAGE_TAG}
+                            docker push ${DOCKERHUB_NAMESPACE}/${svc}:latest
                         """
                     }
                 }
             }
             post {
                 always {
-                    sh 'docker logout "$REGISTRY" || true'
+                    sh 'docker logout || true'
                 }
             }
         }
@@ -246,7 +245,7 @@ pipeline {
                         SERVICES.each { svc ->
                             sh """
                                 kubectl set image deployment/${svc} \
-                                  ${svc}=${REGISTRY}/${svc}:${IMAGE_TAG} \
+                                                                    ${svc}=${DOCKERHUB_NAMESPACE}/${svc}:${IMAGE_TAG} \
                                   -n ${K8S_NAMESPACE}
                                 kubectl rollout status deployment/${svc} \
                                   -n ${K8S_NAMESPACE} --timeout=180s
@@ -262,7 +261,7 @@ pipeline {
         always {
             script {
                 SERVICES.each { svc ->
-                    sh "docker rmi ${REGISTRY}/${svc}:${IMAGE_TAG} ${REGISTRY}/${svc}:latest || true"
+                    sh "docker rmi ${DOCKERHUB_NAMESPACE}/${svc}:${IMAGE_TAG} ${DOCKERHUB_NAMESPACE}/${svc}:latest || true"
                 }
             }
             cleanWs()
