@@ -115,38 +115,43 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            tools {
-                jdk 'jdk21'
-            }
-            steps {
-                withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    script {
-                        SERVICES.each { svc ->
-                            dir(svc) {
-                                sh """
-                                    mvn -B -ntp ${SONAR_MAVEN_PLUGIN}:sonar \\
-                                      -Dsonar.organization=${SONAR_ORGANIZATION} \\
-                                      -Dsonar.projectKey=karnativishnu_${svc} \\
-                                      -Dsonar.projectName=${svc} \\
-                                      -Dsonar.projectVersion=${IMAGE_TAG} \\
-                                      -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \\
-                                      -Dsonar.exclusions=${SONAR_EXCLUSIONS}
-                                """
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        /*
+         * Enable after SonarCloud can reach the Jenkins webhook endpoint.
+         * The Quality Gate stage requires that webhook to avoid timing out.
+         *
+         * stage('SonarQube Analysis') {
+         *     tools {
+         *         jdk 'jdk21'
+         *     }
+         *     steps {
+         *         withSonarQubeEnv("${SONARQUBE_ENV}") {
+         *             script {
+         *                 SERVICES.each { svc ->
+         *                     dir(svc) {
+         *                         sh """
+         *                             mvn -B -ntp ${SONAR_MAVEN_PLUGIN}:sonar \\
+         *                               -Dsonar.organization=${SONAR_ORGANIZATION} \\
+         *                               -Dsonar.projectKey=karnativishnu_${svc} \\
+         *                               -Dsonar.projectName=${svc} \\
+         *                               -Dsonar.projectVersion=${IMAGE_TAG} \\
+         *                               -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \\
+         *                               -Dsonar.exclusions=${SONAR_EXCLUSIONS}
+         *                         """
+         *                     }
+         *                 }
+         *             }
+         *         }
+         *     }
+         * }
+         *
+         * stage('Quality Gate') {
+         *     steps {
+         *         timeout(time: 10, unit: 'MINUTES') {
+         *             waitForQualityGate abortPipeline: true
+         *         }
+         *     }
+         * }
+         */
 
         stage('Dependency Vulnerability Scan') {
             steps {
