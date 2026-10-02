@@ -15,9 +15,21 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: grafana
           image: grafana/grafana:11.1.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
           env:
             - name: GF_SECURITY_ADMIN_USER
               value: admin
@@ -36,6 +48,10 @@ spec:
             - name: dashboard
               mountPath: /var/lib/grafana/dashboards/microservices-demo.json
               subPath: microservices-demo.json
+            - name: data
+              mountPath: /var/lib/grafana
+            - name: tmp
+              mountPath: /tmp
           readinessProbe:
             httpGet:
               path: /api/health
@@ -65,3 +81,7 @@ spec:
         - name: dashboard
           configMap:
             name: grafana-dashboard
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
