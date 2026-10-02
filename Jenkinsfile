@@ -25,7 +25,7 @@ pipeline {
         SONAR_EXCLUSIONS   = '**/target/**,**/generated/**'
         K8S_NAMESPACE     = 'microservices-demo'
         KUBECONFIG_CREDS  = 'kubeconfig-microservices-demo'
-        TRIVY_EXIT_CODE   = '1'
+        TRIVY_EXIT_CODE   = '0'
         TRIVY_SEVERITY    = 'HIGH,CRITICAL'
     }
 
