@@ -10,10 +10,10 @@ project in this repo.
 |---|---|---|
 | `inventory-service` | 8081 | Owns product/stock data (H2 in-memory DB) |
 | `order-service` | 8082 | Places orders; calls `inventory-service` to check & reduce stock |
-| `api-gateway` | 8080 | Single entry point; routes `/api/inventory/**` and `/api/orders/**` |
+| `api-gateway` | 8080 (8083 on the Docker host) | Single entry point; routes `/api/inventory/**` and `/api/orders/**` |
 
 ```
-Client -> api-gateway (8080) -> order-service (8082) -> inventory-service (8081)
+Client -> api-gateway (8083) -> order-service (8082) -> inventory-service (8081)
                               -> inventory-service (8081) directly too
 ```
 
@@ -43,18 +43,18 @@ docker compose up --build
 
 ```bash
 # list seeded products (via gateway)
-curl http://localhost:8080/api/inventory/products
+curl http://localhost:8083/api/inventory/products
 
 # place an order for 2 units of product id 1 (Laptop)
-curl -X POST http://localhost:8080/api/orders \
+curl -X POST http://localhost:8083/api/orders \
   -H "Content-Type: application/json" \
   -d '{"productId": 1, "quantity": 2}'
 
 # check stock was reduced
-curl http://localhost:8080/api/inventory/products/1
+curl http://localhost:8083/api/inventory/products/1
 
 # list orders
-curl http://localhost:8080/api/orders
+curl http://localhost:8083/api/orders
 ```
 
 ## Run with Kubernetes (alternative to Compose)
