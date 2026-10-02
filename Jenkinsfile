@@ -116,6 +116,9 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
+            tools {
+                jdk 'jdk21'
+            }
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
                     script {
