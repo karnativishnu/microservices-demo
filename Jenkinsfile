@@ -21,6 +21,7 @@ pipeline {
         REGISTRY_CREDS    = 'nexus-docker-credentials'
         IMAGE_TAG         = "1.0.${BUILD_NUMBER}"
         SONARQUBE_ENV     = 'sonarqube'
+        SONAR_ORGANIZATION = 'karnativishnu'
         SONAR_MAVEN_PLUGIN = 'org.sonarsource.scanner.maven:sonar-maven-plugin:3.11.0.3922'
         SONAR_EXCLUSIONS   = '**/target/**,**/generated/**'
         K8S_NAMESPACE     = 'microservices-demo'
@@ -122,7 +123,8 @@ pipeline {
                             dir(svc) {
                                 sh """
                                     mvn -B -ntp ${SONAR_MAVEN_PLUGIN}:sonar \\
-                                      -Dsonar.projectKey=microservices-demo-${svc} \\
+                                      -Dsonar.organization=${SONAR_ORGANIZATION} \\
+                                      -Dsonar.projectKey=karnativishnu_${svc} \\
                                       -Dsonar.projectName=${svc} \\
                                       -Dsonar.projectVersion=${IMAGE_TAG} \\
                                       -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \\
