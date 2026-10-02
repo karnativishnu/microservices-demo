@@ -1,0 +1,28 @@
+services:
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8081:8081"
+
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    environment:
+      INVENTORY_SERVICE_URL: http://inventory-service:8081
+    depends_on:
+      - inventory-service
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      INVENTORY_SERVICE_URL: http://inventory-service:8081
+      ORDER_SERVICE_URL: http://order-service:8082
+    depends_on:
+      - inventory-service
+      - order-service
